@@ -9,7 +9,7 @@ module "security_group_msk" {
   use_name_prefix = false
   ingress_with_cidr_blocks = lookup(each.value, "ingress_with_cidr_blocks", [
     {
-      rule        = "kafka"
+      rule        = "kafka-broker-tcp"
       cidr_blocks = data.aws_vpc.this[each.key].cidr_block
     }
   ])
