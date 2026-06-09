@@ -5,7 +5,7 @@ module "wrapper_msk" {
 
   msk_parameters = {
     "Ex-Simple" = {
-      name                   = "x"
+      name                   = "${local.common_name_prefix}-msk"
       kafka_version          = "4.1.x.kraft"
       number_of_broker_nodes = 3
       enhanced_monitoring    = "PER_TOPIC_PER_PARTITION"
