@@ -6,7 +6,7 @@ module "wrapper_msk" {
   msk_parameters = {
     "Ex-Simple" = {
       name                   = "x"
-      kafka_version          = "3.5.1"
+      kafka_version          = "4.1.x.kraft"
       number_of_broker_nodes = 3
       enhanced_monitoring    = "PER_TOPIC_PER_PARTITION"
 
@@ -14,7 +14,7 @@ module "wrapper_msk" {
       broker_node_storage_info = {
         ebs_storage_info = { volume_size = 100 }
       }
-      broker_node_instance_type = "kafka.t3.small"
+      broker_node_instance_type = "kafka.m5.large"
       # broker_node_security_groups = ["sg-12345678"]
 
       encryption_in_transit_client_broker = "TLS"
@@ -29,9 +29,9 @@ module "wrapper_msk" {
 
       jmx_exporter_enabled    = true
       node_exporter_enabled   = true
-      cloudwatch_logs_enabled = true
+      cloudwatch_logs_enabled = false
       s3_logs_enabled         = true
-      s3_logs_bucket          = "aws-msk-kafka-cluster-logs"
+      s3_logs_bucket          = "dmc-lab-msk"
       s3_logs_prefix          = "s3-bucket-test"
 
       scaling_max_capacity = 512
@@ -40,7 +40,7 @@ module "wrapper_msk" {
       client_authentication = {
         sasl = { scram = true }
       }
-      create_scram_secret_association = true
+      create_scram_secret_association = false
       # scram_secret_association_secret_arn_list = [
       #   aws_secretsmanager_secret.one.arn,
       #   aws_secretsmanager_secret.two.arn,
