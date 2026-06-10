@@ -5,7 +5,7 @@ module "wrapper_msk" {
 
   msk_parameters = {
     "Ex-Simple" = {
-      name                   = "${local.common_name_prefix}-msk"
+      name                   = "${local.common_name_prefix}-msk-cluster"
       kafka_version          = "4.1.x.kraft"
       number_of_broker_nodes = 3
       enhanced_monitoring    = "PER_TOPIC_PER_PARTITION"
@@ -31,7 +31,7 @@ module "wrapper_msk" {
       node_exporter_enabled   = true
       cloudwatch_logs_enabled = false
       s3_logs_enabled         = true
-      s3_logs_bucket          = "dmc-lab-msk"
+      s3_logs_bucket          = "dmc-lab-msk-bucket"
       s3_logs_prefix          = "s3-bucket-test"
 
       scaling_max_capacity = 512
