@@ -3,11 +3,12 @@ module "msk" {
   source   = "terraform-aws-modules/msk-kafka-cluster/aws"
   version  = "3.3.0"
 
+
   broker_node_az_distribution                   = try(each.value.broker_node_az_distribution, var.msk_defaults.handler, null)
   broker_node_client_subnets                    = try(each.value.broker_node_client_subnets, var.msk_defaults.broker_node_client_subnets, [])
   broker_node_connectivity_info                 = try(each.value.broker_node_connectivity_info, var.msk_defaults.broker_node_connectivity_info, null)
   broker_node_instance_type                     = try(each.value.broker_node_instance_type, var.msk_defaults.broker_node_instance_type, null)
-  broker_node_security_groups                   = try(each.value.broker_node_security_groups, var.msk_defaults.broker_node_security_groups, [])
+  broker_node_security_groups                   = [module.security_group_msk[each.key].security_group_id]
   broker_node_storage_info                      = try(each.value.broker_node_storage_info, var.msk_defaults.broker_node_storage_info, null)
   client_authentication                         = try(each.value.client_authentication, var.msk_defaults.client_authentication, null)
   cloudwatch_log_group_class                    = try(each.value.cloudwatch_log_group_class, var.msk_defaults.cloudwatch_log_group_class, null)
