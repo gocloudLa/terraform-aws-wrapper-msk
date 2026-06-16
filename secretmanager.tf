@@ -1,25 +1,31 @@
-resource "aws_secretsmanager_secret" "this" {
-  for_each = var.msk_parameters
+ephemeral "random_password" "scram" {
+  for_each = {
+    for k, v in var.msk_parameters : k => v
+    if try(v.create_scram_secret_association, var.msk_defaults.create_scram_secret_association, false) && length(try(v.scram_secret_association_secret_arn_list, var.msk_defaults.scram_secret_association_secret_arn_list, [])) == 0
+  }
 
-  name                    = try(each.value.secret.name, var.msk_defaults.secret.name, "msk-${local.common_name}-${each.key}")
-  description             = try(each.value.secret.description, var.msk_defaults.secret.description, "Root Secret for msk instance")
-  kms_key_id              = try(each.value.secret.kms_key_id, var.msk_defaults.secret.kms_key_id, null)
-  recovery_window_in_days = try(each.value.secret.recovery_window_in_days, var.msk_defaults.secret.recovery_window_in_days, 30)
-  tags                    = local.common_tags
+  length  = try(each.value.scram_password_length, var.msk_defaults.scram_password_length, 32)
+  special = false
 }
 
-resource "aws_secretsmanager_secret_version" "secret_val" {
-  for_each = var.msk_parameters
+resource "aws_secretsmanager_secret" "scram" {
+  for_each = ephemeral.random_password.scram
 
-  secret_id = aws_secretsmanager_secret.this[each.key].id
-  secret_string = jsonencode({
-    "engine" : "${module.msk[each.key].db_instance_engine}",
-    "host" : try(each.value.dns_records[""].zone_name, "") != "" ? "${local.common_name}-${each.key}.rds.${each.value.dns_records[""].zone_name}" : "${module.rds[each.key].db_instance_address}",
-    "username" : "${module.rds[each.key].db_instance_username}",
-    "password" : "${try(each.value.password_wo, var.msk_defaults.password_wo, random_password.this[each.key].result)}",
-    "dbname" : "",
-    "port" : "${module.rds[each.key].db_instance_port}"
-    "rds_host" : "${module.rds[each.key].db_instance_address}",
-    }
-  )
+  name                    = try(var.msk_parameters[each.key].scram_secret_name, "AmazonMSK_${local.common_name}-${each.key}")
+  description             = try(var.msk_parameters[each.key].scram_secret_description, var.msk_defaults.scram_secret_description, "SCRAM credentials for MSK cluster ${each.key}")
+  kms_key_id              = try(var.msk_parameters[each.key].scram_secret_kms_key_id, var.msk_defaults.scram_secret_kms_key_id, null)
+  recovery_window_in_days = try(var.msk_parameters[each.key].scram_secret_recovery_window_in_days, var.msk_defaults.scram_secret_recovery_window_in_days, 30)
+
+  tags = merge(local.common_tags, try(var.msk_parameters[each.key].tags, var.msk_defaults.tags, null))
+}
+
+resource "aws_secretsmanager_secret_version" "scram" {
+  for_each = aws_secretsmanager_secret.scram
+
+  secret_id            = each.value.id
+  secret_string_wo     = jsonencode({
+    username = try(var.msk_parameters[each.key].scram_username, "kafka-${each.key}")
+    password = ephemeral.random_password.scram[each.key].result
+  })
+  secret_string_wo_version = try(var.msk_parameters[each.key].scram_secret_version, var.msk_defaults.scram_secret_version, 1)
 }
