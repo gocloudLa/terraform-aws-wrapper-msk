@@ -91,7 +91,6 @@ features:
 important_notes: ""
 input_table: |
   | Name | Description | Type | Default | Required |
-  |------|-------------|------|---------|:--------:|
   | broker_node_az_distribution | The distribution of broker nodes across availability zones. | `string` | `null` | no |
   | broker_node_client_subnets | A list of subnets to connect to in client VPC. | `list` | `[]` | no |
   | broker_node_connectivity_info | Information about the cluster access configuration. | `object({
