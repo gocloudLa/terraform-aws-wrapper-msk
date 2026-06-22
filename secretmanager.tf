@@ -22,8 +22,8 @@ resource "aws_secretsmanager_secret" "scram" {
 resource "aws_secretsmanager_secret_version" "scram" {
   for_each = aws_secretsmanager_secret.scram
 
-  secret_id            = each.value.id
-  secret_string_wo     = jsonencode({
+  secret_id = each.value.id
+  secret_string_wo = jsonencode({
     username = try(var.msk_parameters[each.key].scram_username, "kafka-${each.key}")
     password = ephemeral.random_password.scram[each.key].result
   })
