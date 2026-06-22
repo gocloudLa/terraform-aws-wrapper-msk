@@ -1,21 +1,22 @@
 # Complete Example 🚀
 
-This example demonstrates the comprehensive configuration of an Amazon Managed Streaming for Apache Kafka (MSK) cluster using Terraform.
+This example demonstrates multiple MSK cluster configurations showcasing different security group strategies, authentication methods, and monitoring setups.
 
 ## 🔧 What's Included
 
 ### Analysis of Terraform Configuration
 
 #### Main Purpose
-The main purpose is to set up a fully featured MSK cluster with monitoring, encryption, SASL/SCRAM authentication, and AWS Glue Schema Registries.
+Provision MSK clusters with three security group patterns: auto-created with custom rules, externally managed, and merged (auto-created + external).
 
 #### Key Features Demonstrated
-- **MSK Cluster Configuration**: Sets up an MSK cluster with specific Kafka version, broker instance types, and storage parameters.
-- **Security & Authentication**: Configures encryption in transit (TLS) and enables SASL/SCRAM client authentication.
-- **Monitoring & Logging**: Enables Enhanced Monitoring, JMX/Node Exporters, and configures cluster logging to an S3 bucket.
-- **Storage Autoscaling**: Defines scaling max capacity and target utilization values for broker storage.
-- **AWS Glue Integration**: Provisions AWS Glue Schema Registries and registers associated data schemas.
-- **Configuration Properties**: Applies custom server properties to the MSK cluster configuration.
+- **Auto-created SG with custom rules (Ex-Simple)**: Wrapper creates and manages the SG with per-port ingress rules for Kafka, ZooKeeper, and Prometheus.
+- **Bring your own SG (Ex-BringYourOwnSG)**: Disables SG creation (`security_group_create = false`) and references pre-existing security groups.
+- **Merged SGs (Ex-MergedSGs)**: Combines the auto-created SG (default rules) with additional external security groups via `broker_node_security_groups`.
+- **SCRAM Authentication**: Auto-creates ephemeral Secrets Manager credentials (state-free) when no external secret ARN list is provided.
+- **IAM Authentication**: Demonstrates SASL/IAM for clusters that integrate with AWS IAM policies.
+- **Prometheus Monitoring**: JMX and Node exporters enabled with dedicated ingress rules for ports 11001-11002.
+- **Storage Autoscaling**: Configures scaling up to 512 GiB at 80% utilization threshold.
 
 ## 🚀 Quick Start
 
