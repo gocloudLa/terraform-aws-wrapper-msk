@@ -1,5 +1,5 @@
 locals {
-  msk_scram_secrets = {
+  scram_secrets = {
     for k, v in var.msk_parameters : k => v
     if try(v.create_scram_secret_association, var.msk_defaults.create_scram_secret_association, false) && length(try(v.scram_secret_association_secret_arn_list, var.msk_defaults.scram_secret_association_secret_arn_list, [])) == 0
   }
@@ -7,7 +7,7 @@ locals {
 
 resource "aws_kms_key" "scram" {
   for_each = {
-    for k, v in local.msk_scram_secrets : k => v
+    for k, v in local.scram_secrets : k => v
     if try(v.scram_secret_kms_key_id, var.msk_defaults.scram_secret_kms_key_id, null) == null
   }
 
@@ -22,17 +22,10 @@ resource "aws_kms_alias" "scram" {
   target_key_id = each.value.key_id
 }
 
-ephemeral "random_password" "scram" {
-  for_each = local.msk_scram_secrets
-
-  length  = try(each.value.scram_password_length, var.msk_defaults.scram_password_length, 32)
-  special = false
-}
-
 resource "aws_secretsmanager_secret" "scram" {
-  for_each = local.msk_scram_secrets
+  for_each = local.scram_secrets
 
-  name                    = try(each.value.scram_secret_name, var.msk_defaults.scram_secret_name, "AmazonMSK_${local.common_name}-${each.key}")
+  name                    = try(each.value.scram_secret_name, "AmazonMSK_${local.common_name}-${each.key}")
   description             = try(each.value.scram_secret_description, var.msk_defaults.scram_secret_description, "SCRAM credentials for MSK cluster ${each.key}")
   kms_key_id              = try(each.value.scram_secret_kms_key_id, var.msk_defaults.scram_secret_kms_key_id, aws_kms_key.scram[each.key].arn)
   recovery_window_in_days = try(each.value.scram_secret_recovery_window_in_days, var.msk_defaults.scram_secret_recovery_window_in_days, 30)
@@ -46,7 +39,7 @@ resource "aws_secretsmanager_secret_version" "scram" {
   secret_id = each.value.id
   secret_string_wo = jsonencode({
     username = try(var.msk_parameters[each.key].scram_username, "kafka-${each.key}")
-    password = ephemeral.random_password.scram[each.key].result
+    password = random_password.this[each.key].result
   })
   secret_string_wo_version = try(var.msk_parameters[each.key].scram_secret_version, var.msk_defaults.scram_secret_version, 1)
 }
