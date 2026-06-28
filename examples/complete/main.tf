@@ -18,8 +18,8 @@ module "wrapper_msk" {
 
       ## CONFIGURATION
       configuration_server_properties = {
-        "auto.create.topics.enable" = true
-        "delete.topic.enable"       = true
+        "auto.create.topics.enable" = "true"
+        "delete.topic.enable"       = "true"
       }
 
       ## TOPICS
@@ -63,8 +63,8 @@ module "wrapper_msk" {
 
       ## CONFIGURATION
       configuration_server_properties = {
-        "auto.create.topics.enable" = true
-        "delete.topic.enable"       = true
+        "auto.create.topics.enable" = "true"
+        "delete.topic.enable"       = "true"
       }
 
       ## TOPICS
