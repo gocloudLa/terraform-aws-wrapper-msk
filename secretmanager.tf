@@ -1,12 +1,34 @@
 /*----------------------------------------------------------------------*/
 /* MSK | Secrets Manager                                                */
 /*----------------------------------------------------------------------*/
+resource "aws_kms_key" "this" {
+  for_each = {
+    for k, v in var.msk_parameters : k => v
+    if try(v.secret.kms_key_id, var.msk_defaults.secret.kms_key_id, null) == null
+  }
+
+  description             = try(each.value.secret.kms.description, var.msk_defaults.secret.kms.description, "KMS key for MSK SCRAM secret - ${local.common_name}-${each.key}")
+  deletion_window_in_days = try(each.value.secret.kms.deletion_window_in_days, var.msk_defaults.secret.kms.deletion_window_in_days, 7)
+  enable_key_rotation     = try(each.value.secret.kms.enable_key_rotation, var.msk_defaults.secret.kms.enable_key_rotation, true)
+  multi_region            = try(each.value.secret.kms.multi_region, var.msk_defaults.secret.kms.multi_region, false)
+  policy                  = try(each.value.secret.kms.policy, var.msk_defaults.secret.kms.policy, null)
+
+  tags = merge(local.common_tags, try(each.value.tags, var.msk_defaults.tags, null))
+}
+
+resource "aws_kms_alias" "this" {
+  for_each = aws_kms_key.this
+
+  name          = "alias/${local.common_name}-msk-scram-${each.key}"
+  target_key_id = each.value.key_id
+}
+
 resource "aws_secretsmanager_secret" "this" {
   for_each = var.msk_parameters
 
   name                    = try(each.value.secret.name, var.msk_defaults.secret.name, "AmazonMSK_${local.common_name}-${each.key}")
   description             = try(each.value.secret.description, var.msk_defaults.secret.description, "SCRAM credentials for MSK cluster ${each.key}")
-  kms_key_id              = try(each.value.secret.kms_key_id, var.msk_defaults.secret.kms_key_id, null)
+  kms_key_id              = try(each.value.secret.kms_key_id, var.msk_defaults.secret.kms_key_id, aws_kms_key.this[each.key].arn)
   recovery_window_in_days = try(each.value.secret.recovery_window_in_days, var.msk_defaults.secret.recovery_window_in_days, 30)
   tags                    = merge(local.common_tags, try(each.value.tags, var.msk_defaults.tags, null))
 }

@@ -283,14 +283,11 @@ features:
           }
           ```
 important_notes: |
-  - ⚠️ **Cluster creation time:** MSK cluster provisioning typically takes 15-30 minutes. Plan accordingly for CI/CD pipelines.
-  - ⚠️ **Broker count:** The `number_of_broker_nodes` must be a multiple of the number of broker subnets (auto-discovered or explicit via `broker_node_client_subnets`).
-  - ℹ️ **Subnets:** Private subnets are auto-discovered using `subnet_name` (default `"${common_name_prefix}-private*"`). Override with `broker_node_client_subnets` for an explicit list.
-  - 🔒 **Encryption:** TLS encryption in transit is enabled by default (`encryption_in_transit_client_broker = "TLS"`). The AWS API default is `TLS_PLAINTEXT` but this wrapper enforces `TLS` for security.
-  - ℹ️ **Storage autoscaling:** Enabled by default. Once storage is scaled up, it cannot be scaled back down. The `scaling_max_capacity` sets the upper bound.
-  - ⚠️ **Configuration updates:** Changing `kafka_version` or `configuration_server_properties` triggers a rolling update of all brokers, which can take significant time.
-  - 🔒 **Authentication:** SCRAM is enabled by default with the auto-created secret associated to the cluster. Override `client_authentication` for IAM-only or other methods.
-  - 🔒 **SCRAM secrets:** A Secrets Manager secret is created for every cluster entry with a resource policy allowing `kafka.amazonaws.com`. Bump `random_password.pass_version` to rotate the auto-generated password.
+  - ⚠️ **Cluster creation time:** Provisioning takes 15–30 minutes.
+  - ⚠️ **Broker count:** `number_of_broker_nodes` must be a multiple of the broker subnet count.
+  - ⚠️ **Configuration updates:** Changes to `kafka_version` or `configuration_server_properties` trigger a rolling broker update.
+  - ⚠️ **Storage autoscaling:** EBS storage cannot be scaled back down.
+  - 🔒 **SCRAM secrets:** MSK requires a customer managed KMS key; omit `secret.kms_key_id` for an auto-created CMK.
 input_table: |
   | name | Name of the MSK cluster. | `string` | `"${local.common_name}-${each.key}"` | no |
   | create | Determines whether cluster resources will be created. | `bool` | `true` | no |
@@ -310,7 +307,12 @@ input_table: |
   | password_wo | Explicit password for SCRAM (omit to auto-generate). | `string` | auto-generated | no |
   | secret.name | Override name for the auto-created secret. | `string` | `"AmazonMSK_${common_name}-${key}"` | no |
   | secret.description | Description for the auto-created secret. | `string` | `"SCRAM credentials for MSK cluster ${key}"` | no |
-  | secret.kms_key_id | KMS key for encrypting the secret. | `string` | `null` | no |
+  | secret.kms_key_id | Existing KMS key ID or ARN (skips auto-created CMK). | `string` | auto-created CMK | no |
+  | secret.kms.description | Description of the auto-created KMS key. | `string` | `"KMS key for MSK SCRAM secret - ${common_name}-${key}"` | no |
+  | secret.kms.deletion_window_in_days | Waiting period after scheduled KMS key deletion (7–30 days). | `number` | `7` | no |
+  | secret.kms.enable_key_rotation | Enables automatic annual rotation on the auto-created KMS key. | `bool` | `true` | no |
+  | secret.kms.multi_region | Whether the auto-created KMS key is multi-Region. | `bool` | `false` | no |
+  | secret.kms.policy | Custom key policy JSON for the auto-created KMS key. | `string` | AWS default key policy | no |
   | secret.recovery_window_in_days | Recovery window for the secret. | `number` | `30` | no |
   | random_password | Options for auto-generated password (length, pass_version, etc.). | `object` | `{}` | no |
   | encryption_at_rest_kms_key_arn | KMS key ARN for encrypting data at rest. | `string` | `null` | no |
