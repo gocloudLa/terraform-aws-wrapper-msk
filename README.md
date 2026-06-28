@@ -354,77 +354,82 @@ msk_parameters = {
 
 
 ## 📑 Inputs
-| Name                                          | Description                                                       | Type           | Default                                        | Required |
-| --------------------------------------------- | ----------------------------------------------------------------- | -------------- | ---------------------------------------------- | -------- |
-| name                                          | Name of the MSK cluster.                                          | `string`       | `"${local.common_name}-${each.key}"`           | no       |
-| create                                        | Determines whether cluster resources will be created.             | `bool`         | `true`                                         | no       |
-| kafka_version                                 | Desired Kafka software version.                                   | `string`       | `"3.9.x"`                                      | no       |
-| number_of_broker_nodes                        | Total number of broker nodes in the cluster.                      | `number`       | `3`                                            | no       |
-| broker_node_instance_type                     | Instance type for the Kafka brokers.                              | `string`       | `"kafka.t3.small"`                             | no       |
-| vpc_name                                      | VPC Name tag used for service discovery.                          | `string`       | `"${common_name_prefix}"`                      | no       |
-| subnet_name                                   | Wildcard to find broker subnets by Name tag.                      | `string`       | `"${common_name_prefix}-private*"`             | no       |
-| broker_node_client_subnets                    | Explicit list of subnet IDs for broker nodes.                     | `list(string)` | auto-discovered via subnet_name                | no       |
-| broker_node_az_distribution                   | Distribution of broker nodes across AZs.                          | `string`       | `null`                                         | no       |
-| broker_node_storage_info                      | Storage volumes configuration for broker nodes.                   | `object`       | `{ ebs_storage_info = { volume_size = 20 } }`  | no       |
-| broker_node_connectivity_info                 | Cluster access configuration (public access, VPC connectivity).   | `object`       | `null`                                         | no       |
-| client_authentication                         | Client authentication configuration (sasl, tls, unauthenticated). | `object`       | `{ sasl = { scram = true } }`                  | no       |
-| create_scram_secret_association               | Whether to create SASL/SCRAM secret association.                  | `bool`         | `true`                                         | no       |
-| scram_secret_association_secret_arn_list      | List of Secrets Manager ARNs for SCRAM.                           | `list(string)` | auto-created secret ARN                        | no       |
-| username                                      | Username for the SCRAM credential stored in Secrets Manager.      | `string`       | `"admin"`                                      | no       |
-| password_wo                                   | Explicit password for SCRAM (omit to auto-generate).              | `string`       | auto-generated                                 | no       |
-| secret.name                                   | Override name for the auto-created secret.                        | `string`       | `"AmazonMSK_${common_name}-${key}"`            | no       |
-| secret.description                            | Description for the auto-created secret.                          | `string`       | `"SCRAM credentials for MSK cluster ${key}"`   | no       |
-| secret.kms_key_id                             | KMS key for encrypting the secret.                                | `string`       | `null`                                         | no       |
-| secret.recovery_window_in_days                | Recovery window for the secret.                                   | `number`       | `30`                                           | no       |
-| random_password                               | Options for auto-generated password (length, pass_version, etc.). | `object`       | `{}`                                           | no       |
-| encryption_at_rest_kms_key_arn                | KMS key ARN for encrypting data at rest.                          | `string`       | `null`                                         | no       |
-| encryption_in_transit_client_broker           | Encryption for data in transit between clients and brokers.       | `string`       | `"TLS"`                                        | no       |
-| encryption_in_transit_in_cluster              | Whether data among broker nodes is encrypted.                     | `bool`         | `true`                                         | no       |
-| enhanced_monitoring                           | CloudWatch monitoring level.                                      | `string`       | `"DEFAULT"`                                    | no       |
-| storage_mode                                  | Storage mode for supported tiers (LOCAL or TIERED).               | `string`       | `"LOCAL"`                                      | no       |
-| rebalancing                                   | Intelligent rebalancing configuration.                            | `object`       | `null`                                         | no       |
-| timeouts                                      | Create, update, and delete timeout configurations.                | `object`       | `null`                                         | no       |
-| create_configuration                          | Whether to create a Kafka configuration.                          | `bool`         | `true`                                         | no       |
-| configuration_name                            | Name of the MSK configuration.                                    | `string`       | `"${common_name}-${key}-configuration"`        | no       |
-| configuration_description                     | Description of the MSK configuration.                             | `string`       | `"${common_name}-${key} MSK Configuration"`    | no       |
-| configuration_server_properties               | Map of server.properties for Kafka brokers.                       | `map(string)`  | `{}`                                           | no       |
-| configuration_arn                             | ARN of an externally created configuration.                       | `string`       | `null`                                         | no       |
-| configuration_revision                        | Revision of the externally created configuration.                 | `number`       | `null`                                         | no       |
-| cloudwatch_logs_enabled                       | Enable streaming broker logs to CloudWatch Logs.                  | `bool`         | `false`                                        | no       |
-| create_cloudwatch_log_group                   | Whether to create a CloudWatch log group.                         | `bool`         | `true`                                         | no       |
-| cloudwatch_log_group_name                     | Name of the CloudWatch Log Group.                                 | `string`       | `null`                                         | no       |
-| cloudwatch_log_group_class                    | Log class of the log group (STANDARD or INFREQUENT_ACCESS).       | `string`       | `null`                                         | no       |
-| cloudwatch_log_group_retention_in_days        | Log retention in days.                                            | `number`       | `0`                                            | no       |
-| cloudwatch_log_group_kms_key_id               | KMS Key ARN for encrypting log data.                              | `string`       | `null`                                         | no       |
-| firehose_logs_enabled                         | Enable streaming broker logs to Kinesis Data Firehose.            | `bool`         | `false`                                        | no       |
-| firehose_delivery_stream                      | Name of the Firehose delivery stream.                             | `string`       | `null`                                         | no       |
-| s3_logs_enabled                               | Enable streaming broker logs to S3.                               | `bool`         | `false`                                        | no       |
-| s3_logs_bucket                                | Name of the S3 bucket for logs.                                   | `string`       | `null`                                         | no       |
-| s3_logs_prefix                                | Prefix for the S3 log folder.                                     | `string`       | `null`                                         | no       |
-| jmx_exporter_enabled                          | Enable JMX Exporter for Prometheus.                               | `bool`         | `false`                                        | no       |
-| node_exporter_enabled                         | Enable Node Exporter for Prometheus.                              | `bool`         | `false`                                        | no       |
-| enable_storage_autoscaling                    | Enable autoscaling for broker storage.                            | `bool`         | `true`                                         | no       |
-| scaling_max_capacity                          | Max storage capacity for autoscaling (GiB).                       | `number`       | `250`                                          | no       |
-| scaling_role_arn                              | IAM role ARN for Application AutoScaling.                         | `string`       | `null`                                         | no       |
-| scaling_target_value                          | Storage utilization threshold for scaling (%).                    | `number`       | `70`                                           | no       |
-| create_schema_registry                        | Whether to create a Glue schema registry.                         | `bool`         | `false`                                        | no       |
-| schema_registries                             | Map of schema registries to create.                               | `map(object)`  | `{}`                                           | no       |
-| schemas                                       | Map of schemas to create within the registry.                     | `map(object)`  | `{}`                                           | no       |
-| topics                                        | Map of MSK topics to create.                                      | `map(object)`  | `{}`                                           | no       |
-| create_cluster_policy                         | Whether to create an MSK cluster policy.                          | `bool`         | `false`                                        | no       |
-| cluster_source_policy_documents               | Source policy documents for cluster policy.                       | `list(string)` | `null`                                         | no       |
-| cluster_override_policy_documents             | Override policy documents for cluster policy.                     | `list(string)` | `null`                                         | no       |
-| cluster_policy_statements                     | Map of policy statements for cluster policy.                      | `map(object)`  | `null`                                         | no       |
-| vpc_connections                               | Map of VPC Connections to create.                                 | `map(object)`  | `{}`                                           | no       |
-| connect_custom_plugins                        | Map of custom plugin configurations.                              | `map(object)`  | `{}`                                           | no       |
-| create_connect_worker_configuration           | Whether to create connect worker configuration.                   | `bool`         | `false`                                        | no       |
-| connect_worker_config_name                    | Name of the worker configuration.                                 | `string`       | `null`                                         | no       |
-| connect_worker_config_description             | Description of the worker configuration.                          | `string`       | `null`                                         | no       |
-| connect_worker_config_properties_file_content | Contents of connect-distributed.properties file.                  | `string`       | `null`                                         | no       |
-| security_group_name                           | Name of the security group created for the cluster.               | `string`       | `"${common_name}-msk-${key}"`                  | no       |
-| ingress_with_cidr_blocks                      | Custom ingress rules for the security group.                      | `list(map)`    | Kafka, ZooKeeper, and Prometheus from VPC CIDR | no       |
-| egress_with_cidr_blocks                       | Custom egress rules for the security group.                       | `list(map)`    | all outbound                                   | no       |
-| tags                                          | Additional tags merged into all resources.                        | `map(string)`  | `null`                                         | no       |
+| Name                                          | Description                                                       | Type           | Default                                                  | Required |
+| --------------------------------------------- | ----------------------------------------------------------------- | -------------- | -------------------------------------------------------- | -------- |
+| name                                          | Name of the MSK cluster.                                          | `string`       | `"${local.common_name}-${each.key}"`                     | no       |
+| create                                        | Determines whether cluster resources will be created.             | `bool`         | `true`                                                   | no       |
+| kafka_version                                 | Desired Kafka software version.                                   | `string`       | `"3.9.x"`                                                | no       |
+| number_of_broker_nodes                        | Total number of broker nodes in the cluster.                      | `number`       | `3`                                                      | no       |
+| broker_node_instance_type                     | Instance type for the Kafka brokers.                              | `string`       | `"kafka.t3.small"`                                       | no       |
+| vpc_name                                      | VPC Name tag used for service discovery.                          | `string`       | `"${common_name_prefix}"`                                | no       |
+| subnet_name                                   | Wildcard to find broker subnets by Name tag.                      | `string`       | `"${common_name_prefix}-private*"`                       | no       |
+| broker_node_client_subnets                    | Explicit list of subnet IDs for broker nodes.                     | `list(string)` | auto-discovered via subnet_name                          | no       |
+| broker_node_az_distribution                   | Distribution of broker nodes across AZs.                          | `string`       | `null`                                                   | no       |
+| broker_node_storage_info                      | Storage volumes configuration for broker nodes.                   | `object`       | `{ ebs_storage_info = { volume_size = 20 } }`            | no       |
+| broker_node_connectivity_info                 | Cluster access configuration (public access, VPC connectivity).   | `object`       | `null`                                                   | no       |
+| client_authentication                         | Client authentication configuration (sasl, tls, unauthenticated). | `object`       | `{ sasl = { scram = true } }`                            | no       |
+| create_scram_secret_association               | Whether to create SASL/SCRAM secret association.                  | `bool`         | `true`                                                   | no       |
+| scram_secret_association_secret_arn_list      | List of Secrets Manager ARNs for SCRAM.                           | `list(string)` | auto-created secret ARN                                  | no       |
+| username                                      | Username for the SCRAM credential stored in Secrets Manager.      | `string`       | `"admin"`                                                | no       |
+| password_wo                                   | Explicit password for SCRAM (omit to auto-generate).              | `string`       | auto-generated                                           | no       |
+| secret.name                                   | Override name for the auto-created secret.                        | `string`       | `"AmazonMSK_${common_name}-${key}"`                      | no       |
+| secret.description                            | Description for the auto-created secret.                          | `string`       | `"SCRAM credentials for MSK cluster ${key}"`             | no       |
+| secret.kms_key_id                             | Existing KMS key ID or ARN (skips auto-created CMK).              | `string`       | auto-created CMK                                         | no       |
+| secret.kms.description                        | Description of the auto-created KMS key.                          | `string`       | `"KMS key for MSK SCRAM secret - ${common_name}-${key}"` | no       |
+| secret.kms.deletion_window_in_days            | Waiting period after scheduled KMS key deletion (7–30 days).      | `number`       | `7`                                                      | no       |
+| secret.kms.enable_key_rotation                | Enables automatic annual rotation on the auto-created KMS key.    | `bool`         | `true`                                                   | no       |
+| secret.kms.multi_region                       | Whether the auto-created KMS key is multi-Region.                 | `bool`         | `false`                                                  | no       |
+| secret.kms.policy                             | Custom key policy JSON for the auto-created KMS key.              | `string`       | AWS default key policy                                   | no       |
+| secret.recovery_window_in_days                | Recovery window for the secret.                                   | `number`       | `30`                                                     | no       |
+| random_password                               | Options for auto-generated password (length, pass_version, etc.). | `object`       | `{}`                                                     | no       |
+| encryption_at_rest_kms_key_arn                | KMS key ARN for encrypting data at rest.                          | `string`       | `null`                                                   | no       |
+| encryption_in_transit_client_broker           | Encryption for data in transit between clients and brokers.       | `string`       | `"TLS"`                                                  | no       |
+| encryption_in_transit_in_cluster              | Whether data among broker nodes is encrypted.                     | `bool`         | `true`                                                   | no       |
+| enhanced_monitoring                           | CloudWatch monitoring level.                                      | `string`       | `"DEFAULT"`                                              | no       |
+| storage_mode                                  | Storage mode for supported tiers (LOCAL or TIERED).               | `string`       | `"LOCAL"`                                                | no       |
+| rebalancing                                   | Intelligent rebalancing configuration.                            | `object`       | `null`                                                   | no       |
+| timeouts                                      | Create, update, and delete timeout configurations.                | `object`       | `null`                                                   | no       |
+| create_configuration                          | Whether to create a Kafka configuration.                          | `bool`         | `true`                                                   | no       |
+| configuration_name                            | Name of the MSK configuration.                                    | `string`       | `"${common_name}-${key}-configuration"`                  | no       |
+| configuration_description                     | Description of the MSK configuration.                             | `string`       | `"${common_name}-${key} MSK Configuration"`              | no       |
+| configuration_server_properties               | Map of server.properties for Kafka brokers.                       | `map(string)`  | `{}`                                                     | no       |
+| configuration_arn                             | ARN of an externally created configuration.                       | `string`       | `null`                                                   | no       |
+| configuration_revision                        | Revision of the externally created configuration.                 | `number`       | `null`                                                   | no       |
+| cloudwatch_logs_enabled                       | Enable streaming broker logs to CloudWatch Logs.                  | `bool`         | `false`                                                  | no       |
+| create_cloudwatch_log_group                   | Whether to create a CloudWatch log group.                         | `bool`         | `true`                                                   | no       |
+| cloudwatch_log_group_name                     | Name of the CloudWatch Log Group.                                 | `string`       | `null`                                                   | no       |
+| cloudwatch_log_group_class                    | Log class of the log group (STANDARD or INFREQUENT_ACCESS).       | `string`       | `null`                                                   | no       |
+| cloudwatch_log_group_retention_in_days        | Log retention in days.                                            | `number`       | `0`                                                      | no       |
+| cloudwatch_log_group_kms_key_id               | KMS Key ARN for encrypting log data.                              | `string`       | `null`                                                   | no       |
+| firehose_logs_enabled                         | Enable streaming broker logs to Kinesis Data Firehose.            | `bool`         | `false`                                                  | no       |
+| firehose_delivery_stream                      | Name of the Firehose delivery stream.                             | `string`       | `null`                                                   | no       |
+| s3_logs_enabled                               | Enable streaming broker logs to S3.                               | `bool`         | `false`                                                  | no       |
+| s3_logs_bucket                                | Name of the S3 bucket for logs.                                   | `string`       | `null`                                                   | no       |
+| s3_logs_prefix                                | Prefix for the S3 log folder.                                     | `string`       | `null`                                                   | no       |
+| jmx_exporter_enabled                          | Enable JMX Exporter for Prometheus.                               | `bool`         | `false`                                                  | no       |
+| node_exporter_enabled                         | Enable Node Exporter for Prometheus.                              | `bool`         | `false`                                                  | no       |
+| enable_storage_autoscaling                    | Enable autoscaling for broker storage.                            | `bool`         | `true`                                                   | no       |
+| scaling_max_capacity                          | Max storage capacity for autoscaling (GiB).                       | `number`       | `250`                                                    | no       |
+| scaling_role_arn                              | IAM role ARN for Application AutoScaling.                         | `string`       | `null`                                                   | no       |
+| scaling_target_value                          | Storage utilization threshold for scaling (%).                    | `number`       | `70`                                                     | no       |
+| create_schema_registry                        | Whether to create a Glue schema registry.                         | `bool`         | `false`                                                  | no       |
+| schema_registries                             | Map of schema registries to create.                               | `map(object)`  | `{}`                                                     | no       |
+| schemas                                       | Map of schemas to create within the registry.                     | `map(object)`  | `{}`                                                     | no       |
+| topics                                        | Map of MSK topics to create.                                      | `map(object)`  | `{}`                                                     | no       |
+| create_cluster_policy                         | Whether to create an MSK cluster policy.                          | `bool`         | `false`                                                  | no       |
+| cluster_source_policy_documents               | Source policy documents for cluster policy.                       | `list(string)` | `null`                                                   | no       |
+| cluster_override_policy_documents             | Override policy documents for cluster policy.                     | `list(string)` | `null`                                                   | no       |
+| cluster_policy_statements                     | Map of policy statements for cluster policy.                      | `map(object)`  | `null`                                                   | no       |
+| vpc_connections                               | Map of VPC Connections to create.                                 | `map(object)`  | `{}`                                                     | no       |
+| connect_custom_plugins                        | Map of custom plugin configurations.                              | `map(object)`  | `{}`                                                     | no       |
+| create_connect_worker_configuration           | Whether to create connect worker configuration.                   | `bool`         | `false`                                                  | no       |
+| connect_worker_config_name                    | Name of the worker configuration.                                 | `string`       | `null`                                                   | no       |
+| connect_worker_config_description             | Description of the worker configuration.                          | `string`       | `null`                                                   | no       |
+| connect_worker_config_properties_file_content | Contents of connect-distributed.properties file.                  | `string`       | `null`                                                   | no       |
+| security_group_name                           | Name of the security group created for the cluster.               | `string`       | `"${common_name}-msk-${key}"`                            | no       |
+| ingress_with_cidr_blocks                      | Custom ingress rules for the security group.                      | `list(map)`    | Kafka, ZooKeeper, and Prometheus from VPC CIDR           | no       |
+| egress_with_cidr_blocks                       | Custom egress rules for the security group.                       | `list(map)`    | all outbound                                             | no       |
+| tags                                          | Additional tags merged into all resources.                        | `map(string)`  | `null`                                                   | no       |
 
 
 
@@ -433,14 +438,11 @@ msk_parameters = {
 
 
 ## ⚠️ Important Notes
-- ⚠️ **Cluster creation time:** MSK cluster provisioning typically takes 15-30 minutes. Plan accordingly for CI/CD pipelines.
-- ⚠️ **Broker count:** The `number_of_broker_nodes` must be a multiple of the number of broker subnets (auto-discovered or explicit via `broker_node_client_subnets`).
-- ℹ️ **Subnets:** Private subnets are auto-discovered using `subnet_name` (default `"${common_name_prefix}-private*"`). Override with `broker_node_client_subnets` for an explicit list.
-- 🔒 **Encryption:** TLS encryption in transit is enabled by default (`encryption_in_transit_client_broker = "TLS"`). The AWS API default is `TLS_PLAINTEXT` but this wrapper enforces `TLS` for security.
-- ℹ️ **Storage autoscaling:** Enabled by default. Once storage is scaled up, it cannot be scaled back down. The `scaling_max_capacity` sets the upper bound.
-- ⚠️ **Configuration updates:** Changing `kafka_version` or `configuration_server_properties` triggers a rolling update of all brokers, which can take significant time.
-- 🔒 **Authentication:** SCRAM is enabled by default with the auto-created secret associated to the cluster. Override `client_authentication` for IAM-only or other methods.
-- 🔒 **SCRAM secrets:** A Secrets Manager secret is created for every cluster entry with a resource policy allowing `kafka.amazonaws.com`. Bump `random_password.pass_version` to rotate the auto-generated password.
+- ⚠️ **Cluster creation time:** Provisioning takes 15–30 minutes.
+- ⚠️ **Broker count:** `number_of_broker_nodes` must be a multiple of the broker subnet count.
+- ⚠️ **Configuration updates:** Changes to `kafka_version` or `configuration_server_properties` trigger a rolling broker update.
+- ⚠️ **Storage autoscaling:** EBS storage cannot be scaled back down.
+- 🔒 **SCRAM secrets:** MSK requires a customer managed KMS key; omit `secret.kms_key_id` for an auto-created CMK.
 
 
 
