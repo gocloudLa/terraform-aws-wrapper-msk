@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------*/
-/* MSK Variables                                                        */
+/* MSK | Secrets Manager                                                */
 /*----------------------------------------------------------------------*/
 resource "aws_secretsmanager_secret" "this" {
   for_each = var.msk_parameters
@@ -8,7 +8,7 @@ resource "aws_secretsmanager_secret" "this" {
   description             = try(each.value.secret.description, var.msk_defaults.secret.description, "SCRAM credentials for MSK cluster ${each.key}")
   kms_key_id              = try(each.value.secret.kms_key_id, var.msk_defaults.secret.kms_key_id, null)
   recovery_window_in_days = try(each.value.secret.recovery_window_in_days, var.msk_defaults.secret.recovery_window_in_days, 30)
-  tags                    = local.common_tags
+  tags                    = merge(local.common_tags, try(each.value.tags, var.msk_defaults.tags, null))
 }
 
 resource "aws_secretsmanager_secret_version" "secret_val" {
@@ -16,10 +16,9 @@ resource "aws_secretsmanager_secret_version" "secret_val" {
 
   secret_id = aws_secretsmanager_secret.this[each.key].id
   secret_string = jsonencode({
-    "username" : "${try(each.value.username, var.msk_defaults.username, "admin")}",
-    "password" : "${try(each.value.password_wo, var.msk_defaults.password_wo, random_password.this[each.key].result)}",
-    }
-  )
+    username = try(each.value.username, var.msk_defaults.username, "admin")
+    password = try(each.value.password_wo, var.msk_defaults.password_wo, random_password.this[each.key].result)
+  })
 }
 
 resource "aws_secretsmanager_secret_policy" "this" {

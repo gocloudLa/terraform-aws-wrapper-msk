@@ -12,12 +12,12 @@ variable "metadata" {
 
 variable "msk_parameters" {
   type        = any
-  description = ""
+  description = "Map of MSK cluster configurations to provision."
   default     = {}
 }
 
 variable "msk_defaults" {
-  description = "Map of default values which will be used for each item."
   type        = any
+  description = "Default values merged into each entry of msk_parameters."
   default     = {}
 }
