@@ -1,22 +1,17 @@
 # Complete Example 🚀
 
-This example demonstrates multiple MSK cluster configurations showcasing different security group strategies, authentication methods, and monitoring setups.
+Common MSK use cases in a single msk_parameters map.
 
 ## 🔧 What's Included
 
 ### Analysis of Terraform Configuration
 
 #### Main Purpose
-Provision MSK clusters with three security group patterns: auto-created with custom rules, externally managed, and merged (auto-created + external).
+Copy Ex-Simple or Ex-Cluster and adjust only what your environment needs.
 
 #### Key Features Demonstrated
-- **Auto-created SG with custom rules (Ex-Simple)**: Wrapper creates and manages the SG with per-port ingress rules for Kafka, ZooKeeper, and Prometheus.
-- **Bring your own SG (Ex-BringYourOwnSG)**: Disables SG creation (`security_group_create = false`) and references pre-existing security groups.
-- **Merged SGs (Ex-MergedSGs)**: Combines the auto-created SG (default rules) with additional external security groups via `broker_node_security_groups`.
-- **SCRAM Authentication**: Auto-creates ephemeral Secrets Manager credentials (state-free) when no external secret ARN list is provided.
-- **IAM Authentication**: Demonstrates SASL/IAM for clusters that integrate with AWS IAM policies.
-- **Prometheus Monitoring**: JMX and Node exporters enabled with dedicated ingress rules for ports 11001-11002.
-- **Storage Autoscaling**: Configures scaling up to 512 GiB at 80% utilization threshold.
+- **Ex-Simple**: Dev/staging — 3 brokers, SCRAM auth, one topic. Uses wrapper defaults for instance type, subnets, and security group.
+- **Ex-Cluster**: Production-like — 6 brokers, SCRAM auth, monitoring, CloudWatch Logs, higher partition counts, and schema registry.
 
 ## 🚀 Quick Start
 
