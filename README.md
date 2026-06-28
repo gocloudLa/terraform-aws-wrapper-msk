@@ -59,8 +59,8 @@ msk_parameters = {
     # create_scram_secret_association = true
 
     configuration_server_properties = {
-      "auto.create.topics.enable" = true
-      "delete.topic.enable"       = true
+      "auto.create.topics.enable" = "true"
+      "delete.topic.enable"       = "true"
     }
   }
 }
