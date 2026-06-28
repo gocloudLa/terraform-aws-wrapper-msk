@@ -1,0 +1,6 @@
+title: "Complete Example"
+description: "Common MSK use cases in a single msk_parameters map."
+main_purpose: "Copy Ex-Simple or Ex-Cluster and adjust only what your environment needs."
+key_features:
+  - "**Ex-Simple**: Dev/staging — 3 brokers, SCRAM auth, one topic. Uses wrapper defaults for instance type, subnets, and security group."
+  - "**Ex-Cluster**: Production-like — 6 brokers, SCRAM auth, monitoring, CloudWatch Logs, higher partition counts, and schema registry."
