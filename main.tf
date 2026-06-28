@@ -3,11 +3,11 @@ module "msk" {
   source   = "terraform-aws-modules/msk-kafka-cluster/aws"
   version  = "3.3.0"
 
-  broker_node_az_distribution                   = try(each.value.broker_node_az_distribution, var.msk_defaults.broker_node_az_distribution, null)
-  broker_node_client_subnets                    = try(each.value.broker_node_client_subnets, var.msk_defaults.broker_node_client_subnets, data.aws_subnets.this[each.key].ids)
-  broker_node_connectivity_info                 = try(each.value.broker_node_connectivity_info, var.msk_defaults.broker_node_connectivity_info, null)
-  broker_node_instance_type                     = try(each.value.broker_node_instance_type, var.msk_defaults.broker_node_instance_type, "kafka.t3.small")
-  broker_node_security_groups                   = [module.security_group_msk[each.key].security_group_id]
+  broker_node_az_distribution   = try(each.value.broker_node_az_distribution, var.msk_defaults.broker_node_az_distribution, null)
+  broker_node_client_subnets    = try(each.value.broker_node_client_subnets, var.msk_defaults.broker_node_client_subnets, data.aws_subnets.this[each.key].ids)
+  broker_node_connectivity_info = try(each.value.broker_node_connectivity_info, var.msk_defaults.broker_node_connectivity_info, null)
+  broker_node_instance_type     = try(each.value.broker_node_instance_type, var.msk_defaults.broker_node_instance_type, "kafka.t3.small")
+  broker_node_security_groups   = [module.security_group_msk[each.key].security_group_id]
   broker_node_storage_info = try(each.value.broker_node_storage_info, var.msk_defaults.broker_node_storage_info, {
     ebs_storage_info = { volume_size = 20 }
   })
