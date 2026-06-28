@@ -1,8 +1,8 @@
 /*----------------------------------------------------------------------*/
-/* MSK Passwords                                                        */
+/* MSK Variables                                                        */
 /*----------------------------------------------------------------------*/
 resource "random_password" "this" {
-  for_each = local.scram_secrets
+  for_each = var.msk_parameters
 
   length           = try(each.value.random_password.length, var.msk_defaults.random_password.length, 30)
   min_lower        = try(each.value.random_password.min_lower, var.msk_defaults.random_password.min_lower, 0)

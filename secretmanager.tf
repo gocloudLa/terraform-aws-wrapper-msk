@@ -1,45 +1,39 @@
-locals {
-  scram_secrets = {
-    for k, v in var.msk_parameters : k => v
-    if try(v.create_scram_secret_association, var.msk_defaults.create_scram_secret_association, false) && length(try(v.scram_secret_association_secret_arn_list, var.msk_defaults.scram_secret_association_secret_arn_list, [])) == 0
-  }
+/*----------------------------------------------------------------------*/
+/* MSK Variables                                                        */
+/*----------------------------------------------------------------------*/
+resource "aws_secretsmanager_secret" "this" {
+  for_each = var.msk_parameters
+
+  name                    = try(each.value.secret.name, var.msk_defaults.secret.name, "AmazonMSK_${local.common_name}-${each.key}")
+  description             = try(each.value.secret.description, var.msk_defaults.secret.description, "SCRAM credentials for MSK cluster ${each.key}")
+  kms_key_id              = try(each.value.secret.kms_key_id, var.msk_defaults.secret.kms_key_id, null)
+  recovery_window_in_days = try(each.value.secret.recovery_window_in_days, var.msk_defaults.secret.recovery_window_in_days, 30)
+  tags                    = local.common_tags
 }
 
-resource "aws_kms_key" "scram" {
-  for_each = {
-    for k, v in local.scram_secrets : k => v
-    if try(v.scram_secret_kms_key_id, var.msk_defaults.scram_secret_kms_key_id, null) == null
-  }
+resource "aws_secretsmanager_secret_version" "secret_val" {
+  for_each = var.msk_parameters
 
-  description = "KMS key for MSK SCRAM secret - ${local.common_name}-${each.key}"
-  tags        = merge(local.common_tags, try(each.value.tags, var.msk_defaults.tags, null))
+  secret_id = aws_secretsmanager_secret.this[each.key].id
+  secret_string = jsonencode({
+    "username" : "${try(each.value.username, var.msk_defaults.username, "admin")}",
+    "password" : "${try(each.value.password_wo, var.msk_defaults.password_wo, random_password.this[each.key].result)}",
+    }
+  )
 }
 
-resource "aws_kms_alias" "scram" {
-  for_each = aws_kms_key.scram
+resource "aws_secretsmanager_secret_policy" "this" {
+  for_each = aws_secretsmanager_secret.this
 
-  name          = "alias/${local.common_name}-msk-scram-${each.key}"
-  target_key_id = each.value.key_id
-}
-
-resource "aws_secretsmanager_secret" "scram" {
-  for_each = local.scram_secrets
-
-  name                    = try(each.value.scram_secret_name, "AmazonMSK_${local.common_name}-${each.key}")
-  description             = try(each.value.scram_secret_description, var.msk_defaults.scram_secret_description, "SCRAM credentials for MSK cluster ${each.key}")
-  kms_key_id              = try(each.value.scram_secret_kms_key_id, var.msk_defaults.scram_secret_kms_key_id, aws_kms_key.scram[each.key].arn)
-  recovery_window_in_days = try(each.value.scram_secret_recovery_window_in_days, var.msk_defaults.scram_secret_recovery_window_in_days, 30)
-
-  tags = merge(local.common_tags, try(each.value.tags, var.msk_defaults.tags, null))
-}
-
-resource "aws_secretsmanager_secret_version" "scram" {
-  for_each = aws_secretsmanager_secret.scram
-
-  secret_id = each.value.id
-  secret_string_wo = jsonencode({
-    username = try(var.msk_parameters[each.key].scram_username, "kafka-${each.key}")
-    password = random_password.this[each.key].result
+  secret_arn = each.value.arn
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "AWSKafkaResourcePolicy"
+      Effect    = "Allow"
+      Principal = { Service = "kafka.amazonaws.com" }
+      Action    = "secretsmanager:GetSecretValue"
+      Resource  = each.value.arn
+    }]
   })
-  secret_string_wo_version = try(var.msk_parameters[each.key].scram_secret_version, var.msk_defaults.scram_secret_version, 1)
 }

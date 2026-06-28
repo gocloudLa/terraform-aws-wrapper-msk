@@ -3,14 +3,17 @@ module "msk" {
   source   = "terraform-aws-modules/msk-kafka-cluster/aws"
   version  = "3.3.0"
 
-
   broker_node_az_distribution                   = try(each.value.broker_node_az_distribution, var.msk_defaults.broker_node_az_distribution, null)
-  broker_node_client_subnets                    = try(each.value.broker_node_client_subnets, var.msk_defaults.broker_node_client_subnets, [])
+  broker_node_client_subnets                    = try(each.value.broker_node_client_subnets, var.msk_defaults.broker_node_client_subnets, data.aws_subnets.this[each.key].ids)
   broker_node_connectivity_info                 = try(each.value.broker_node_connectivity_info, var.msk_defaults.broker_node_connectivity_info, null)
-  broker_node_instance_type                     = try(each.value.broker_node_instance_type, var.msk_defaults.broker_node_instance_type, null)
-  broker_node_security_groups                   = local.msk_security_groups[each.key]
-  broker_node_storage_info                      = try(each.value.broker_node_storage_info, var.msk_defaults.broker_node_storage_info, null)
-  client_authentication                         = try(each.value.client_authentication, var.msk_defaults.client_authentication, null)
+  broker_node_instance_type                     = try(each.value.broker_node_instance_type, var.msk_defaults.broker_node_instance_type, "kafka.t3.small")
+  broker_node_security_groups                   = [module.security_group_msk[each.key].security_group_id]
+  broker_node_storage_info = try(each.value.broker_node_storage_info, var.msk_defaults.broker_node_storage_info, {
+    ebs_storage_info = { volume_size = 20 }
+  })
+  client_authentication = try(each.value.client_authentication, var.msk_defaults.client_authentication, {
+    sasl = { scram = true }
+  })
   cloudwatch_log_group_class                    = try(each.value.cloudwatch_log_group_class, var.msk_defaults.cloudwatch_log_group_class, null)
   cloudwatch_log_group_kms_key_id               = try(each.value.cloudwatch_log_group_kms_key_id, var.msk_defaults.cloudwatch_log_group_kms_key_id, null)
   cloudwatch_log_group_name                     = try(each.value.cloudwatch_log_group_name, var.msk_defaults.cloudwatch_log_group_name, null)
@@ -33,8 +36,8 @@ module "msk" {
   create_cluster_policy                         = try(each.value.create_cluster_policy, var.msk_defaults.create_cluster_policy, false)
   create_configuration                          = try(each.value.create_configuration, var.msk_defaults.create_configuration, true)
   create_connect_worker_configuration           = try(each.value.create_connect_worker_configuration, var.msk_defaults.create_connect_worker_configuration, false)
-  create_schema_registry                        = try(each.value.create_schema_registry, var.msk_defaults.create_schema_registry, true)
-  create_scram_secret_association               = try(each.value.create_scram_secret_association, var.msk_defaults.create_scram_secret_association, false)
+  create_schema_registry                        = try(each.value.create_schema_registry, var.msk_defaults.create_schema_registry, false)
+  create_scram_secret_association               = try(each.value.create_scram_secret_association, var.msk_defaults.create_scram_secret_association, true)
   enable_storage_autoscaling                    = try(each.value.enable_storage_autoscaling, var.msk_defaults.enable_storage_autoscaling, true)
   encryption_at_rest_kms_key_arn                = try(each.value.encryption_at_rest_kms_key_arn, var.msk_defaults.encryption_at_rest_kms_key_arn, null)
   encryption_in_transit_client_broker           = try(each.value.encryption_in_transit_client_broker, var.msk_defaults.encryption_in_transit_client_broker, "TLS")
@@ -43,10 +46,10 @@ module "msk" {
   firehose_delivery_stream                      = try(each.value.firehose_delivery_stream, var.msk_defaults.firehose_delivery_stream, null)
   firehose_logs_enabled                         = try(each.value.firehose_logs_enabled, var.msk_defaults.firehose_logs_enabled, false)
   jmx_exporter_enabled                          = try(each.value.jmx_exporter_enabled, var.msk_defaults.jmx_exporter_enabled, false)
-  kafka_version                                 = try(each.value.kafka_version, var.msk_defaults.kafka_version, null)
+  kafka_version                                 = try(each.value.kafka_version, var.msk_defaults.kafka_version, "3.9.x")
   name                                          = try(each.value.name, var.msk_defaults.name, "${local.common_name}-${each.key}")
   node_exporter_enabled                         = try(each.value.node_exporter_enabled, var.msk_defaults.node_exporter_enabled, false)
-  number_of_broker_nodes                        = try(each.value.number_of_broker_nodes, var.msk_defaults.number_of_broker_nodes, null)
+  number_of_broker_nodes                        = try(each.value.number_of_broker_nodes, var.msk_defaults.number_of_broker_nodes, 3)
   rebalancing                                   = try(each.value.rebalancing, var.msk_defaults.rebalancing, null)
   region                                        = try(each.value.region, var.msk_defaults.region, null)
   s3_logs_bucket                                = try(each.value.s3_logs_bucket, var.msk_defaults.s3_logs_bucket, null)
@@ -57,7 +60,7 @@ module "msk" {
   scaling_target_value                          = try(each.value.scaling_target_value, var.msk_defaults.scaling_target_value, 70)
   schema_registries                             = try(each.value.schema_registries, var.msk_defaults.schema_registries, {})
   schemas                                       = try(each.value.schemas, var.msk_defaults.schemas, {})
-  scram_secret_association_secret_arn_list      = try(each.value.scram_secret_association_secret_arn_list, var.msk_defaults.scram_secret_association_secret_arn_list, try([aws_secretsmanager_secret.scram[each.key].arn], []))
+  scram_secret_association_secret_arn_list      = try(each.value.scram_secret_association_secret_arn_list, var.msk_defaults.scram_secret_association_secret_arn_list, [aws_secretsmanager_secret.this[each.key].arn])
   storage_mode                                  = try(each.value.storage_mode, var.msk_defaults.storage_mode, "LOCAL")
   tags                                          = merge(local.common_tags, try(each.value.tags, var.msk_defaults.tags, null))
   timeouts                                      = try(each.value.timeouts, var.msk_defaults.timeouts, null)
