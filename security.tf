@@ -2,7 +2,7 @@ module "security_group_msk" {
   for_each = var.msk_parameters
 
   source  = "terraform-aws-modules/security-group/aws"
-  version = "5.3.1"
+  version = "6.0.0"
 
   name            = try(each.value.security_group_name, var.msk_defaults.security_group_name, "${local.common_name}-msk-${each.key}")
   vpc_id          = data.aws_vpc.this[each.key].id
